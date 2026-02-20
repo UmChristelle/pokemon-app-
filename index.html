@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PokéDex Explorer</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            pixel: ['"Press Start 2P"', 'monospace'],
+            body: ['Nunito', 'sans-serif'],
+          },
+          keyframes: {
+            fadeSlideUp: {
+              '0%': { opacity: '0', transform: 'translateY(30px) scale(0.97)' },
+              '100%': { opacity: '1', transform: 'translateY(0) scale(1)' },
+            },
+            spin: {
+              to: { transform: 'rotate(360deg)' },
+            },
+            wiggle: {
+              '0%, 100%': { transform: 'rotate(-3deg) scale(1.05)' },
+              '50%': { transform: 'rotate(3deg) scale(1.1)' },
+            },
+            float: {
+              '0%, 100%': { transform: 'translateY(0px)' },
+              '50%': { transform: 'translateY(-10px)' },
+            },
+          },
+          animation: {
+            fadeSlideUp: 'fadeSlideUp 0.5s ease-out forwards',
+            wiggle: 'wiggle 0.6s ease-in-out',
+            float: 'float 3s ease-in-out infinite',
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    body { font-family: 'Nunito', sans-serif; }
+    .card-appear { animation: fadeSlideUp 0.5s ease-out forwards; }
+    .sprite-img { image-rendering: pixelated; image-rendering: crisp-edges; }
+
+    .type-fire     { background: #FD7D24; }
+    .type-water    { background: #4592C4; }
+    .type-grass    { background: #9BCC50; }
+    .type-electric { background: #EED535; color: #333; }
+    .type-psychic  { background: #F366B9; }
+    .type-ice      { background: #51C4E7; }
+    .type-dragon   { background: #7038F8; }
+    .type-dark     { background: #707070; }
+    .type-fairy    { background: #FDB9E9; color: #333; }
+    .type-normal   { background: #A8A878; }
+    .type-fighting { background: #C03028; }
+    .type-flying   { background: #A890F0; }
+    .type-poison   { background: #A040A0; }
+    .type-ground   { background: #E0C068; color: #333; }
+    .type-rock     { background: #B8A038; }
+    .type-bug      { background: #A8B820; color: #333; }
+    .type-ghost    { background: #705898; }
+    .type-steel    { background: #B8B8D0; color: #333; }
+  </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-red-50 via-yellow-50 to-blue-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 transition-colors duration-500 flex flex-col items-center px-4 py-10">
+
+  <div class="fixed top-4 right-4 z-50">
+    <button id="darkToggle" title="Toggle Dark Mode"
+      class="w-10 h-10 rounded-full bg-white dark:bg-gray-700 shadow-lg flex items-center justify-center text-xl hover:scale-110 transition-transform duration-200 border border-gray-200 dark:border-gray-600">
+      <span id="darkIcon">🌙</span>
+    </button>
+  </div>
+
+  <header class="text-center mb-10">
+    <h1 class="font-pixel text-2xl sm:text-3xl text-red-500 dark:text-red-400 leading-relaxed drop-shadow-lg">PokéDex</h1>
+    <p class="mt-2 text-gray-500 dark:text-gray-400 font-body text-sm font-semibold tracking-widest uppercase">Explorer</p>
+  </header>
+
+  <section class="w-full max-w-md mb-8">
+    <div class="flex gap-2 bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-2 border border-gray-100 dark:border-gray-700 transition-colors duration-300">
+      <input
+        id="searchInput"
+        type="text"
+        placeholder="e.g. pikachu or 25"
+        class="flex-1 bg-transparent outline-none px-3 py-2 text-gray-700 dark:text-gray-200 font-body font-semibold placeholder-gray-300 dark:placeholder-gray-600 text-sm"
+      />
+      <button
+        id="searchBtn"
+        class="bg-red-500 hover:bg-red-600 disabled:bg-red-300 disabled:cursor-not-allowed text-white font-pixel text-xs px-4 py-2 rounded-xl transition-all duration-200 hover:shadow-md active:scale-95"
+      >
+        Search
+      </button>
+    </div>
+    <p id="errorMsg" class="hidden text-center mt-3 text-red-500 dark:text-red-400 font-body font-bold text-sm"></p>
+  </section>
+
+  <div id="loader" class="hidden flex-col items-center gap-3 mb-6">
+    <div class="w-12 h-12 border-4 border-red-200 border-t-red-500 rounded-full animate-spin"></div>
+    <p class="font-pixel text-xs text-gray-400 dark:text-gray-500">Loading...</p>
+  </div>
+
+  <main id="cardContainer" class="hidden w-full max-w-md card-appear">
+    <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-2xl overflow-hidden border border-gray-100 dark:border-gray-700 transition-colors duration-300">
+
+      <div id="cardHeader" class="relative bg-gradient-to-br from-yellow-300 to-orange-400 p-6 flex flex-col items-center">
+       
+        <span id="pokemonId" class="absolute top-3 right-4 font-pixel text-xs text-white/70">#000</span>
+
+        <div class="flex gap-4 items-end justify-center flex-wrap">
+          <div class="flex flex-col items-center">
+            <img id="spriteFront" src="" alt="Front" class="sprite-img w-24 h-24 sm:w-28 sm:h-28 animate-float drop-shadow-xl" />
+            <span class="text-white/80 text-xs font-body mt-1">Front</span>
+          </div>
+          <div id="spriteBackWrap" class="flex flex-col items-center hidden">
+            <img id="spriteBack" src="" alt="Back" class="sprite-img w-20 h-20 sm:w-24 sm:h-24 animate-float drop-shadow-lg" style="animation-delay:0.5s" />
+            <span class="text-white/80 text-xs font-body mt-1">Back</span>
+          </div>
+          <div id="spriteShinyWrap" class="flex flex-col items-center hidden">
+            <img id="spriteShiny" src="" alt="Shiny" class="sprite-img w-20 h-20 sm:w-24 sm:h-24 animate-float drop-shadow-lg" style="animation-delay:1s" />
+            <span class="text-white/80 text-xs font-body mt-1">✨ Shiny</span>
+          </div>
+        </div>
+
+        <h2 id="pokemonName" class="font-pixel text-white text-lg sm:text-xl mt-4 drop-shadow-md text-center"></h2>
+
+        <div id="typesContainer" class="flex gap-2 mt-3 flex-wrap justify-center"></div>
+      </div>
+
+      <div class="p-6 grid grid-cols-2 gap-4">
+        <div class="bg-gray-50 dark:bg-gray-700 rounded-2xl p-4 text-center transition-colors duration-300">
+          <p class="text-gray-400 dark:text-gray-400 text-xs font-body uppercase tracking-wider mb-1">Height</p>
+          <p id="pokemonHeight" class="text-gray-800 dark:text-gray-100 text-xl font-body font-extrabold"></p>
+        </div>
+        <div class="bg-gray-50 dark:bg-gray-700 rounded-2xl p-4 text-center transition-colors duration-300">
+          <p class="text-gray-400 dark:text-gray-400 text-xs font-body uppercase tracking-wider mb-1">Weight</p>
+          <p id="pokemonWeight" class="text-gray-800 dark:text-gray-100 text-xl font-body font-extrabold"></p>
+        </div>
+        <div class="col-span-2 bg-gray-50 dark:bg-gray-700 rounded-2xl p-4 text-center transition-colors duration-300">
+          <p class="text-gray-400 dark:text-gray-400 text-xs font-body uppercase tracking-wider mb-1">Base Experience</p>
+          <p id="pokemonExp" class="text-gray-800 dark:text-gray-100 text-2xl font-body font-extrabold"></p>
+        </div>
+      </div>
+
+    </div>
+  </main>
+  <footer class="mt-12 text-center text-gray-400 dark:text-gray-600 text-xs font-body">
+    Data from <a href="https://pokeapi.co" target="_blank" class="underline hover:text-red-400 transition-colors">PokéAPI</a>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
