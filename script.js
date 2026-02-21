@@ -96,7 +96,7 @@ function displayPokemon(data) {
   pokemonWeight.textContent = `${(data.weight / 10).toFixed(1)} kg`;
   pokemonExp.textContent    = data.base_experience ?? '—';
 
-  spriteFront.src = data.sprites.front_default || '';
+  spriteFront.src = data.sprites.front_default || 'https://via.placeholder.com/96?text=No+Image';
 
   spriteBackWrap.classList.toggle('hidden', !data.sprites.back_default);
   if (data.sprites.back_default) spriteBack.src = data.sprites.back_default;
