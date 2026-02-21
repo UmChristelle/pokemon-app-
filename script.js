@@ -1,25 +1,22 @@
-
-const searchInput   = document.querySelector('#searchInput');
-const searchBtn     = document.querySelector('#searchBtn');
-const loader        = document.querySelector('#loader');
-const cardContainer = document.querySelector('#cardContainer');
-const errorMsg      = document.querySelector('#errorMsg');
-
-const cardHeader    = document.querySelector('#cardHeader');
-const pokemonId     = document.querySelector('#pokemonId');
-const pokemonName   = document.querySelector('#pokemonName');
-const typesContainer= document.querySelector('#typesContainer');
-const spriteFront   = document.querySelector('#spriteFront');
-const spriteBack    = document.querySelector('#spriteBack');
-const spriteShiny   = document.querySelector('#spriteShiny');
+const searchInput    = document.querySelector('#searchInput');
+const searchBtn      = document.querySelector('#searchBtn');
+const loader         = document.querySelector('#loader');
+const cardContainer  = document.querySelector('#cardContainer');
+const errorMsg       = document.querySelector('#errorMsg');
+const cardHeader     = document.querySelector('#cardHeader');
+const pokemonId      = document.querySelector('#pokemonId');
+const pokemonName    = document.querySelector('#pokemonName');
+const typesContainer = document.querySelector('#typesContainer');
+const spriteFront    = document.querySelector('#spriteFront');
+const spriteBack     = document.querySelector('#spriteBack');
+const spriteShiny    = document.querySelector('#spriteShiny');
 const spriteBackWrap  = document.querySelector('#spriteBackWrap');
 const spriteShinyWrap = document.querySelector('#spriteShinyWrap');
-const pokemonHeight = document.querySelector('#pokemonHeight');
-const pokemonWeight = document.querySelector('#pokemonWeight');
-const pokemonExp    = document.querySelector('#pokemonExp');
-
-const darkToggle = document.querySelector('#darkToggle');
-const darkIcon   = document.querySelector('#darkIcon');
+const pokemonHeight  = document.querySelector('#pokemonHeight');
+const pokemonWeight  = document.querySelector('#pokemonWeight');
+const pokemonExp     = document.querySelector('#pokemonExp');
+const darkToggle     = document.querySelector('#darkToggle');
+const darkIcon       = document.querySelector('#darkIcon');
 
 const typeGradients = {
   fire:     'from-orange-400 to-red-500',
@@ -43,34 +40,24 @@ const typeGradients = {
 };
 
 function applyDarkMode(isDark) {
-  if (isDark) {
-    document.documentElement.classList.add('dark');
-    darkIcon.textContent = '☀️';
-    localStorage.setItem('darkMode', 'true');
-  } else {
-    document.documentElement.classList.remove('dark');
-    darkIcon.textContent = '🌙';
-    localStorage.setItem('darkMode', 'false');
-  }
+  document.documentElement.classList.toggle('dark', isDark);
+  darkIcon.textContent = isDark ? '☀️' : '🌙';
+  localStorage.setItem('darkMode', isDark);
 }
 
 applyDarkMode(localStorage.getItem('darkMode') === 'true');
-
 darkToggle.addEventListener('click', () => {
-  const isDark = document.documentElement.classList.contains('dark');
-  applyDarkMode(!isDark);
+  applyDarkMode(!document.documentElement.classList.contains('dark'));
 });
 
 function showLoader() {
-  loader.classList.remove('hidden');
-  loader.classList.add('flex');
+  loader.classList.replace('hidden', 'flex');
   cardContainer.classList.add('hidden');
-  hideError();
+  errorMsg.classList.add('hidden');
 }
 
 function hideLoader() {
-  loader.classList.add('hidden');
-  loader.classList.remove('flex');
+  loader.classList.replace('flex', 'hidden');
 }
 
 function showError(message) {
@@ -78,132 +65,68 @@ function showError(message) {
   errorMsg.classList.remove('hidden');
 }
 
-function hideError() {
-  errorMsg.textContent = '';
-  errorMsg.classList.add('hidden');
-}
-
-function setButtonLoading(isLoading) {
-  searchBtn.disabled = isLoading;
-}
-
 async function fetchPokemon() {
   const query = searchInput.value.trim().toLowerCase();
+  if (!query) return showError('Please enter a Pokémon name or ID!');
 
-  if (!query) {
-    showError('Please enter a Pokémon name or ID!');
-    return;
-  }
   showLoader();
-  setButtonLoading(true);
+  searchBtn.disabled = true;
 
   try {
     const response = await fetch(`https://pokeapi.co/api/v2/pokemon/${query}`);
 
-    if (response.status === 404) {
-      throw new Error(`"${query}" not found. Try another name or ID!`);
-    }
-
-    if (!response.ok) {
-      throw new Error(`Unexpected error (status ${response.status}). Please try again.`);
-    }
+    if (response.status === 404) throw new Error(`"${query}" not found. Try another name or ID!`);
+    if (!response.ok)           throw new Error(`Unexpected error (status ${response.status}). Try again.`);
 
     const data = await response.json();
-
     displayPokemon(data);
 
   } catch (error) {
-    
     hideLoader();
     showError(error.message || 'Network error — check your connection and try again.');
   } finally {
-    setButtonLoading(false);
+    searchBtn.disabled = false;
   }
 }
 
 function displayPokemon(data) {
-  
-  pokemonName.textContent = capitalize(data.name);
-  pokemonId.textContent   = `#${String(data.id).padStart(3, '0')}`;
+  pokemonName.textContent   = data.name.charAt(0).toUpperCase() + data.name.slice(1);
+  pokemonId.textContent     = `#${String(data.id).padStart(3, '0')}`;
+  pokemonHeight.textContent = `${(data.height / 10).toFixed(1)} m`;
+  pokemonWeight.textContent = `${(data.weight / 10).toFixed(1)} kg`;
+  pokemonExp.textContent    = data.base_experience ?? '—';
 
   spriteFront.src = data.sprites.front_default || '';
 
-  const backSrc   = data.sprites.back_default;
-  const shinySrc  = data.sprites.front_shiny;
+  spriteBackWrap.classList.toggle('hidden', !data.sprites.back_default);
+  if (data.sprites.back_default) spriteBack.src = data.sprites.back_default;
 
-  if (backSrc) {
-    spriteBack.src = backSrc;
-    spriteBackWrap.classList.remove('hidden');
-  } else {
-    spriteBackWrap.classList.add('hidden');
-  }
+  spriteShinyWrap.classList.toggle('hidden', !data.sprites.front_shiny);
+  if (data.sprites.front_shiny) spriteShiny.src = data.sprites.front_shiny;
 
-  if (shinySrc) {
-    spriteShiny.src = shinySrc;
-    spriteShinyWrap.classList.remove('hidden');
-  } else {
-    spriteShinyWrap.classList.add('hidden');
-  }
-
-  pokemonHeight.textContent = `${(data.height / 10).toFixed(1)} m`;
-
-  pokemonWeight.textContent = `${(data.weight / 10).toFixed(1)} kg`;
-
-  pokemonExp.textContent = data.base_experience ?? '—';
-
-  typesContainer.innerHTML = ''; 
-
-  const typeBadges = data.types.map((typeObj) => {
-    const typeName = typeObj.type.name;
-
+  typesContainer.innerHTML = '';
+  data.types.map((typeObj) => {
+    const name  = typeObj.type.name;
     const badge = document.createElement('span');
-    badge.textContent = capitalize(typeName);
-    badge.classList.add(
-      'type-' + typeName,
-      'text-white',
-      'text-xs',
-      'font-body',
-      'font-bold',
-      'px-3',
-      'py-1',
-      'rounded-full',
-      'uppercase',
-      'tracking-wider',
-      'shadow'
-    );
+    badge.textContent = name.charAt(0).toUpperCase() + name.slice(1);
+    badge.classList.add('type-' + name, 'text-white', 'text-xs', 'font-body', 'font-bold', 'px-3', 'py-1', 'rounded-full', 'uppercase', 'tracking-wider', 'shadow');
     return badge;
-  });
+  }).forEach((badge) => typesContainer.appendChild(badge));
 
-  typeBadges.forEach((badge) => typesContainer.appendChild(badge));
-
-  const primaryType = data.types[0].type.name;
-  const gradient    = typeGradients[primaryType] || 'from-yellow-300 to-orange-400';
-
-  cardHeader.className = cardHeader.className
-    .replace(/from-\S+/g, '')
-    .replace(/to-\S+/g, '')
-    .trim();
+  const gradient = typeGradients[data.types[0].type.name] || 'from-yellow-300 to-orange-400';
+  cardHeader.className = cardHeader.className.replace(/from-\S+|to-\S+/g, '').trim();
   cardHeader.classList.add('bg-gradient-to-br', ...gradient.split(' '));
 
   hideLoader();
   cardContainer.classList.remove('hidden');
-
   cardContainer.classList.remove('card-appear');
-  void cardContainer.offsetWidth; 
+  void cardContainer.offsetWidth;
   cardContainer.classList.add('card-appear');
 }
 
-function capitalize(str) {
-  return str.charAt(0).toUpperCase() + str.slice(1);
-}
-
 searchBtn.addEventListener('click', fetchPokemon);
+searchInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') fetchPokemon(); });
 
-searchInput.addEventListener('keydown', (event) => {
-  if (event.key === 'Enter') {
-    fetchPokemon();
-  }
-});
 window.addEventListener('load', () => {
   searchInput.value = 'ditto';
   fetchPokemon();
