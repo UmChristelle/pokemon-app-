@@ -3,7 +3,7 @@
 ## 📌 Project Description
 A responsive web application that fetches and displays Pokémon data dynamically using the public PokéAPI.
 
-Users can search Pokémon by name or ID and view detailed information including stats, types, and images.
+Users can search Pokémon by name or ID and view detailed information including statistics, types, and images.
 
 ---
 
@@ -54,7 +54,7 @@ All challenges were solved using try/catch blocks and proper state management.
 ## Screenshots
 
 ### Light Mode
-![Light Mode](images/lightmode.png)
+[Light Mode](images/lightmode.png)
 
 ### Dark Mode
-![Dark Mode](images/darkmode.png)
+[Dark Mode](images/darkmode.png)
